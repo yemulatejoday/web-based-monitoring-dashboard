@@ -21,7 +21,6 @@ npm-debug.log*
 Thumbs.db
 
 # Editor
-.vscode/
 .idea/
 
 # Old project folders (kept for reference, not needed)
