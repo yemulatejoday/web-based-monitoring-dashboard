@@ -1,241 +1,117 @@
-# 🌱 SprayBot Monitor — Farmer Dashboard
+# 🌿 SprayBot Monitor — Web-Based Monitoring Dashboard
 
-A real-world web application that helps farmers monitor their pesticide spraying robots in real time. Built for use on Android mobile phones.
-
----
-
-## What This Project Does
-
-SprayBot Monitor connects to your ESP32-powered pesticide spraying bot and shows you live data on your phone or computer. You can see how far the bot has traveled, how much pesticide it has used, how much battery is left, and how much of your field has been covered.
+A real-time IoT dashboard for pesticide spraying bots (ESP32 + ThingSpeak).  
+Supports **English / हिन्दी / తెలుగు** with live ThingSpeak data, demo mode, and full bot management.
 
 ---
 
-## How It Helps Farmers
+## 🚀 Deploy in 10 Minutes (Free)
 
-- See your bot's live status from anywhere using your phone
-- Know when the pesticide tank is running low
-- Know when the battery needs charging
-- See reports of how much work the bot has done
-- Save your farm details (village, district, crops grown)
-- Send a help request if something goes wrong
+### STEP 1 — Deploy the Backend on Render
 
----
+1. Go to **https://render.com** and click **"Sign Up"** → choose **"Sign up with GitHub"**
+2. Click **"New +"** → **"Web Service"**
+3. Click **"Connect a repository"** → select **`web-based-monitoring-dashboard`**
+4. Fill in these settings:
+   - **Name:** `spraybot-backend`
+   - **Root Directory:** `backend`
+   - **Runtime:** `Node`
+   - **Build Command:** `npm install`
+   - **Start Command:** `node server.js`
+   - **Instance Type:** Free
+5. Scroll down to **"Environment Variables"** and add:
 
-## Main Features
+   | Key | Value |
+   |-----|-------|
+   | `NODE_ENV` | `production` |
+   | `PORT` | `5000` |
+   | `MONGODB_URI` | your MongoDB connection string (see below) |
+   | `JWT_SECRET` | any long random string e.g. `mySecretKey123456789abc` |
+   | `JWT_EXPIRES_IN` | `30d` |
+   | `ALLOWED_ORIGINS` | `https://your-frontend.vercel.app` (update after step 2) |
 
-- **Login / Register** — Secure account with email and password
-- **Live Dashboard** — Real-time bot data (distance, area, pesticide, battery, tank)
-- **Devices Page** — See all your connected bots
-- **Reports** — Historical charts and analytics
-- **Farmer Profile** — Save your name, phone, village, district, state, and crops
-- **Help Form** — Send a message if you need support
-- **Demo Mode** — See sample data before connecting a real bot
-- **Mobile First** — Works great on Android phones
-- **Dark / Light Mode** — Easy on the eyes in any lighting
+6. Click **"Create Web Service"**
+7. Wait ~2 minutes. Copy your backend URL — it looks like:  
+   `https://spraybot-backend.onrender.com`
 
----
-
-## Tech Stack
-
-| Part     | Technology                          |
-|----------|-------------------------------------|
-| Frontend | React, TypeScript, Vite, Tailwind CSS, shadcn/ui |
-| Backend  | Node.js, Express, MongoDB, Mongoose |
-| Auth     | JWT (JSON Web Tokens), bcrypt       |
-| Charts   | Recharts                            |
-| Deploy   | Render (backend), Vercel (frontend) |
-
----
-
-## Final Folder Structure
-
-```
-/
-├── frontend/               ← React app (what farmers see)
-│   ├── src/
-│   │   ├── components/     ← UI components (sidebar, topbar, bottom nav)
-│   │   ├── context/        ← Auth, ThingSpeak state
-│   │   ├── hooks/          ← Custom React hooks
-│   │   ├── lib/            ← Utilities
-│   │   ├── pages/          ← All pages (Dashboard, Profile, Reports, etc.)
-│   │   ├── services/       ← API service layer (api.ts)
-│   │   └── App.tsx         ← Routes
-│   ├── .env                ← Frontend environment variables
-│   ├── package.json
-│   └── vite.config.ts
-│
-├── backend/                ← Express API server
-│   ├── src/
-│   │   ├── config/         ← MongoDB connection
-│   │   ├── controllers/    ← Route logic (auth, profile, bots, telemetry, help)
-│   │   ├── middleware/     ← Auth guard, error handler, validator
-│   │   ├── models/         ← MongoDB schemas (User, Bot, Telemetry, HelpRequest)
-│   │   ├── routes/         ← API route definitions
-│   │   ├── services/       ← Business logic
-│   │   ├── utils/          ← JWT helper, response helper
-│   │   └── app.js          ← Express app setup
-│   ├── server.js           ← Entry point
-│   ├── .env                ← Backend environment variables
-│   └── package.json
-│
-├── .env.example            ← Template for environment variables
-├── .gitignore
-└── README.md
-```
+> **Getting a MongoDB URI (free):**
+> - Go to https://cloud.mongodb.com → Create free account
+> - Create a free cluster → Click "Connect" → "Drivers"
+> - Copy the connection string and replace `<password>` with your password
 
 ---
 
-## How to Run Locally
+### STEP 2 — Deploy the Frontend on Vercel
 
-### Step 1 — Set up MongoDB
+1. Go to **https://vercel.com** and click **"Sign Up"** → choose **"Continue with GitHub"**
+2. Click **"Add New..."** → **"Project"**
+3. Find **`web-based-monitoring-dashboard`** → click **"Import"**
+4. Set:
+   - **Root Directory:** click "Edit" → type `frontend` → click "Continue"
+   - **Framework Preset:** Vite (auto-detected)
+5. Expand **"Environment Variables"** and add:
 
-1. Go to [https://cloud.mongodb.com](https://cloud.mongodb.com)
-2. Create a free account and a free cluster
-3. Click **Connect** → **Connect your application**
-4. Copy the connection string (it looks like `mongodb+srv://...`)
+   | Key | Value |
+   |-----|-------|
+   | `VITE_API_URL` | your Render backend URL from Step 1 e.g. `https://spraybot-backend.onrender.com` |
 
-### Step 2 — Set up the Backend
+6. Click **"Deploy"**
+7. Wait ~1 minute. Your live website link will appear — it looks like:  
+   `https://web-based-monitoring-dashboard.vercel.app`
+
+---
+
+### STEP 3 — Update CORS on Render
+
+1. Go back to **Render** → your `spraybot-backend` service → **"Environment"**
+2. Update `ALLOWED_ORIGINS` to your actual Vercel URL:  
+   `https://web-based-monitoring-dashboard.vercel.app`
+3. Click **"Save Changes"** — Render will redeploy automatically
+
+---
+
+## ✅ Your website is now live!
+
+Open your Vercel URL in any browser. Share it with anyone.
+
+---
+
+## 🛠 Local Development
 
 ```bash
+# Backend
 cd backend
+cp .env.example .env      # fill in your values
 npm install
-```
+npm run dev               # runs on http://localhost:5000
 
-Create a file called `.env` inside the `backend/` folder:
-
-```
-PORT=5000
-NODE_ENV=development
-MONGODB_URI=paste_your_mongodb_connection_string_here
-JWT_SECRET=any_long_random_string_at_least_32_characters
-JWT_EXPIRES_IN=30d
-ALLOWED_ORIGINS=http://localhost:5173,http://localhost:8080
-```
-
-Start the backend:
-
-```bash
-npm start
-```
-
-You should see: `🌱 SprayBot Backend running on port 5000`
-
-### Step 3 — Set up the Frontend
-
-```bash
+# Frontend (new terminal)
 cd frontend
+cp .env.example .env      # set VITE_API_URL=http://localhost:5000
 npm install
+npm run dev               # runs on http://localhost:8080
 ```
 
-Create a file called `.env` inside the `frontend/` folder:
+---
 
-```
-VITE_API_URL=http://localhost:5000
-```
+## 📱 Features
 
-Start the frontend:
-
-```bash
-npm run dev
-```
-
-Open your browser at: `http://localhost:8080`
+- **Live ThingSpeak data** — distance, area, pesticide, tank level
+- **Demo mode** — works without a real bot connected
+- **3 languages** — English, हिन्दी, తెలుగు (switchable anywhere)
+- **Manual bot connect** — enter Bot ID + ThingSpeak Channel ID + Read API Key
+- **Reports** — demo reports always visible, live reports when bot is connected
+- **Dark / Light theme**
+- **Mobile responsive** with bottom navigation
 
 ---
 
-## Required Environment Variables
+## 🔧 Tech Stack
 
-### Backend (`backend/.env`)
-
-| Variable          | Description                                      | Example                          |
-|-------------------|--------------------------------------------------|----------------------------------|
-| `PORT`            | Port the server runs on                          | `5000`                           |
-| `NODE_ENV`        | Environment mode                                 | `development` or `production`    |
-| `MONGODB_URI`     | Your MongoDB connection string                   | `mongodb+srv://user:pass@...`    |
-| `JWT_SECRET`      | Secret key for signing tokens (keep this private)| Any long random string           |
-| `JWT_EXPIRES_IN`  | How long login tokens last                       | `30d`                            |
-| `ALLOWED_ORIGINS` | Frontend URLs allowed to call the API            | `https://your-app.vercel.app`    |
-
-### Frontend (`frontend/.env`)
-
-| Variable        | Description                    | Example                              |
-|-----------------|--------------------------------|--------------------------------------|
-| `VITE_API_URL`  | URL of your backend API        | `https://your-backend.onrender.com`  |
-
----
-
-## How to Deploy Backend (Render)
-
-1. Go to [https://render.com](https://render.com) and create a free account
-2. Click **New** → **Web Service**
-3. Connect your GitHub repository
-4. Set these settings:
-   - **Root Directory**: `backend`
-   - **Build Command**: `npm install`
-   - **Start Command**: `npm start`
-5. Add all environment variables from the table above
-6. Click **Deploy**
-7. Copy the URL Render gives you (e.g. `https://spraybot-api.onrender.com`)
-8. Update `VITE_API_URL` in your frontend `.env` to this URL
-
----
-
-## How to Deploy Frontend (Vercel)
-
-1. Go to [https://vercel.com](https://vercel.com) and create a free account
-2. Click **New Project** → Import your GitHub repository
-3. Set **Root Directory** to `frontend`
-4. Add environment variable: `VITE_API_URL` = your Render backend URL
-5. Click **Deploy**
-
----
-
-## Mobile Support
-
-This app is designed mobile-first for Android phones:
-
-- Large touch-friendly buttons (minimum 44px height)
-- Bottom navigation bar on mobile
-- Responsive grid layouts that work on small screens
-- No horizontal scrolling
-- Readable font sizes
-- Works in both portrait and landscape
-
----
-
-## Production Ready
-
-- Passwords are hashed with bcrypt (never stored as plain text)
-- JWT tokens expire after 30 days
-- Rate limiting prevents abuse (20 login attempts per 15 minutes)
-- Helmet.js sets security headers
-- CORS is configured to only allow your frontend
-- Input validation on all API endpoints
-- Centralized error handling
-- MongoDB with Mongoose for reliable data storage
-
----
-
-## API Endpoints
-
-| Method | Endpoint                    | Auth Required | Description                    |
-|--------|-----------------------------|---------------|--------------------------------|
-| POST   | `/api/auth/register`        | No            | Create new account             |
-| POST   | `/api/auth/login`           | No            | Login and get token            |
-| GET    | `/api/auth/me`              | Yes           | Get current user               |
-| GET    | `/api/profile`              | Yes           | Get farmer profile             |
-| PUT    | `/api/profile`              | Yes           | Update farmer profile          |
-| GET    | `/api/bots`                 | Yes           | Get your bots                  |
-| POST   | `/api/bots`                 | Yes           | Register a bot                 |
-| DELETE | `/api/bots/:botId`          | Yes           | Remove a bot                   |
-| GET    | `/api/bots/available`       | Yes           | Find unclaimed bots            |
-| POST   | `/api/telemetry`            | No (ESP32)    | ESP32 posts live data          |
-| GET    | `/api/telemetry/:botId`     | Yes           | Get latest telemetry           |
-| GET    | `/api/reports/:botId`       | Yes           | Get historical data            |
-| POST   | `/api/help`                 | Yes           | Submit help request            |
-| GET    | `/api/help`                 | Yes           | Get your help requests         |
-| GET    | `/health`                   | No            | Check if server is running     |
-
----
-
-*Built for real farmers. Designed for Android phones. Ready for production.*
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui |
+| Backend | Node.js, Express, MongoDB, JWT |
+| IoT Data | ThingSpeak API (ESP32) |
+| Charts | Recharts |
+| Hosting | Vercel (frontend) + Render (backend) |
