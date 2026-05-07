@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { reportApi } from "@/services/api";
 import { useLanguage } from "@/context/LanguageContext";
+import { useThingSpeak, asNumber } from "@/context/ThingSpeakContext";
 import {
   Bar, BarChart, CartesianGrid, Line, LineChart,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
@@ -42,13 +43,18 @@ const demoTotals = {
 export default function Reports() {
   const { activeBotId } = useAuth();
   const { t } = useLanguage();
+  const { feeds, status: tsStatus } = useThingSpeak();
   const [reportData, setReportData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [viewMode, setViewMode] = useState<"live" | "demo">(activeBotId ? "live" : "demo");
+  // Default to live if a bot is connected, demo otherwise
+  const [viewMode, setViewMode] = useState<"live" | "demo">(() =>
+    activeBotId ? "live" : "demo"
+  );
 
+  // Always switch to live the moment a bot becomes active
   useEffect(() => {
-    // Switch to live automatically when a bot connects
     if (activeBotId) setViewMode("live");
+    else setViewMode("demo");
   }, [activeBotId]);
 
   useEffect(() => {
@@ -70,26 +76,48 @@ export default function Reports() {
   // ── Derived values ──────────────────────────────────────────────────────────
   const isDemo = viewMode === "demo";
 
-  const totalDistance  = isDemo ? demoTotals.distance  : reportData.reduce((a, c) => a + (c.distance  || 0), 0);
-  const totalArea      = isDemo ? demoTotals.area       : reportData.reduce((a, c) => a + (c.area      || 0), 0);
-  const totalPesticide = isDemo ? demoTotals.pesticide  : reportData.reduce((a, c) => a + (c.pesticide || 0), 0);
-  const lastActive     = isDemo
-    ? demoTotals.lastActive
-    : reportData[0]?.createdAt
-      ? new Date(reportData[0].createdAt).toLocaleDateString()
-      : "—";
+  // Use ThingSpeak feeds as fallback when backend has no data yet
+  const hasBackendData = reportData.length > 0;
+  const hasThingSpeakData = feeds.length > 0 && tsStatus === "connected";
 
-  const chartData = isDemo
-    ? demoChartData
-    : [...reportData].reverse().slice(0, 20).map((log) => ({
+  // Build live chart data — prefer backend, fall back to ThingSpeak
+  const liveChartData = hasBackendData
+    ? [...reportData].reverse().slice(0, 20).map((log) => ({
         time: log.createdAt
           ? new Date(log.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
           : "—",
         distance:  log.distance  || 0,
         pesticide: log.pesticide || 0,
         area:      log.area      || 0,
+      }))
+    : feeds.slice(-20).map((f) => ({
+        time: new Date(f.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        distance:  asNumber(f.field2),
+        pesticide: asNumber(f.field4),
+        area:      asNumber(f.field3),
       }));
 
+  const liveTotalDistance  = hasBackendData
+    ? reportData.reduce((a, c) => a + (c.distance  || 0), 0)
+    : asNumber(feeds[feeds.length - 1]?.field2);
+  const liveTotalArea      = hasBackendData
+    ? reportData.reduce((a, c) => a + (c.area      || 0), 0)
+    : asNumber(feeds[feeds.length - 1]?.field3);
+  const liveTotalPesticide = hasBackendData
+    ? reportData.reduce((a, c) => a + (c.pesticide || 0), 0)
+    : asNumber(feeds[feeds.length - 1]?.field4);
+  const liveLastActive     = hasBackendData
+    ? (reportData[0]?.createdAt ? new Date(reportData[0].createdAt).toLocaleDateString() : "—")
+    : (feeds.length > 0 ? new Date(feeds[feeds.length - 1].created_at).toLocaleDateString() : "—");
+
+  const totalDistance  = isDemo ? demoTotals.distance  : liveTotalDistance;
+  const totalArea      = isDemo ? demoTotals.area       : liveTotalArea;
+  const totalPesticide = isDemo ? demoTotals.pesticide  : liveTotalPesticide;
+  const lastActive     = isDemo ? demoTotals.lastActive : liveLastActive;
+  const chartData      = isDemo ? demoChartData         : liveChartData;
+
+  // Show live data if we have either backend data or ThingSpeak data
+  const hasLiveData = hasBackendData || hasThingSpeakData;
   const displayBotId = isDemo ? DEMO_BOT_ID : activeBotId!;
 
   const summaries = [
@@ -175,7 +203,7 @@ export default function Reports() {
       </section>
 
       {/* No live data notice */}
-      {!isDemo && reportData.length === 0 && (
+      {!isDemo && !hasLiveData && (
         <div className="rounded-2xl border border-dashed border-muted-foreground/20 bg-muted/5 p-6 text-center">
           <BarChart3 className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
           <p className="text-sm font-bold text-muted-foreground">{t("reports.noReportsTitle")}</p>
@@ -190,7 +218,7 @@ export default function Reports() {
       )}
 
       {/* Summary Cards */}
-      {(isDemo || reportData.length > 0) && (
+      {(isDemo || hasLiveData) && (
         <>
           <section className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
             {summaries.map((item, idx) => (
