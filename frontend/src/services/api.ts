@@ -19,8 +19,19 @@ const apiFetch = async (path: string, options: RequestInit = {}) => {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${API_URL}${path}`, { ...options, headers });
-  const json = await res.json();
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, { ...options, headers });
+  } catch {
+    throw new Error("Cannot reach server. Check your connection.");
+  }
+
+  let json: any;
+  try {
+    json = await res.json();
+  } catch {
+    throw new Error(`Server error (${res.status})`);
+  }
 
   if (!json.success) {
     throw new Error(json.error || "Request failed");

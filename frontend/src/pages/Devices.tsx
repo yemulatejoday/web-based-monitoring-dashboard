@@ -23,7 +23,8 @@ export default function Devices() {
         const data = await botApi.getAll();
         setBots(data.bots || []);
       } catch {
-        toast.error(t("devices.fetchError"));
+        // Backend may be sleeping (Render free tier) or not reachable — show empty state
+        setBots([]);
       } finally {
         setIsLoading(false);
       }
